@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer components {
+  .card {
+    background-color: var(--color-white);
+    border-radius: var(--radius-lg);
+    padding: --spacing(6);
+    box-shadow: var(--shadow-xl);
+  }
+}
