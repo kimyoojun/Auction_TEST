@@ -12,7 +12,7 @@ export default function Auction() {
     useEffect(() => {
         if (!name) return   // 이름이 없으면 실행 안함
 
-        const ws = new WebSocket(`ws://localhost:8000/ws?name=${encodeURIComponent(name)}`)
+        const ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}/ws?name=${encodeURIComponent(name)}`)
         wsRef.current = ws
 
         ws.onmessage = (event) => {        // 서버가 보낸 문자열 그대로
