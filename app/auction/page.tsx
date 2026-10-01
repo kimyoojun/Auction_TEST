@@ -1,9 +1,44 @@
 "use client"
 
-import { useState } from "react"
-
+import { useState, useEffect, useRef } from "react"
 export default function Auction() {
     const [name, setName] = useState("")
+    const [price, setPrice] = useState(0)
+    const [connection, setConnection] = useState("")
+    const wsRef = useRef<WebSocket | null>(null)  // WebSocket 연결을 담아둘 상자
+
+    useEffect(() => {
+        if (!name) return   // 이름이 없으면 실행 안함
+
+        const ws = new WebSocket(`ws://localhost:8000/ws?name=${encodeURIComponent(name)}`)
+        wsRef.current = ws
+
+        ws.onmessage = (event) => {        // 서버가 보낸 문자열 그대로
+            const msg = JSON.parse(event.data)
+            console.log(msg)
+
+            if (msg.type == "price")
+            {
+                setPrice(msg.price)
+            }
+            else if (msg.type == "join")
+            {
+                setConnection(msg.name)
+            }
+        }
+    return () => {                                 //  cleanup: 이전 연결 닫기
+            ws.close()
+            wsRef.current = null
+        }
+    }, [name])   
+
+    useEffect(() => {
+        if (!connection) return                       // 비어 있으면 할 일 없음
+
+        const timer = setTimeout(() => setConnection(""), 3000)
+
+        return () => clearTimeout(timer)              // cleanup: 다음 실행 전에 이전 타이머 취소
+    }, [connection])
 
     if (!name) {
         return (
@@ -11,9 +46,9 @@ export default function Auction() {
                 <form
                     className="card border flex flex-col gap-3 p-5"
                     onSubmit={(e) => {
-                        e.preventDefault();
-                        const value = new FormData(e.currentTarget).get("name") as string;
-                        if (value.trim()) setName(value.trim());
+                        e.preventDefault()
+                        const value = new FormData(e.currentTarget).get("name") as string
+                        if (value.trim()) setName(value.trim())
                     }}
                 >
                     <h1 className="text-2xl">이름을 입력하세요</h1>
@@ -23,17 +58,23 @@ export default function Auction() {
                     </button>
                 </form>
             </div>
-        );
+        )
     }
 
+
     return (
-        <div className="flex w-screen h-screen justify-center items-center">
+        <div className="relative flex min-h-screen w-full items-center justify-center">
+            {connection && (
+                <h2 className="absolute inset-x-0 top-4 text-center text-2xl">
+                {connection} 님이 접속했습니다.
+                </h2>
+            )}
             <div className="card border flex flex-col gap-5">
                 <h1 className="text-4xl">
                     유니콘 건담 한정판
                 </h1>
                 <div className="flex justify-center text-2xl">
-                    10000원
+                    {price}원
                 </div>
                 <div className="flex gap-2">
                     <input className="border"/>
