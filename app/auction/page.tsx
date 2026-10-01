@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react"
 export default function Auction() {
+    const [error, setError] = useState("")
+    const [bidder, setBidder] = useState<string | null>(null)
     const [name, setName] = useState("")
     const [price, setPrice] = useState(0)
     const [connection, setConnection] = useState("")
@@ -20,10 +22,16 @@ export default function Auction() {
             if (msg.type == "price")
             {
                 setPrice(msg.price)
+                setBidder(msg.bidder)
+                setError("")   
             }
             else if (msg.type == "join")
             {
                 setConnection(msg.name)
+            } 
+            else if (msg.type == "error")
+            {
+                setError(msg.message)
             }
         }
     return () => {                                 //  cleanup: 이전 연결 닫기
@@ -76,12 +84,25 @@ export default function Auction() {
                 <div className="flex justify-center text-2xl">
                     {price}원
                 </div>
-                <div className="flex gap-2">
-                    <input className="border"/>
+                {bidder && <p>최고 입찰자: {bidder}</p>}
+                <form
+                    className="flex gap-2"
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        const form = e.currentTarget
+                        const value = Number(new FormData(form).get("bid"))
+
+                        if (!value) return
+                        wsRef.current?.send(JSON.stringify({ type: "bid", price: value }))
+                        form.reset()
+                    }}
+                >
+                    <input name="bid" type="number" className="border"/>
                     <button className="rounded-lg bg-blue-500 p-2 active:scale-95 active:bg-blue-700">
                         입찰
                     </button>
-                </div>
+                </form>
+                {error && <p className="text-red-500">{error}</p>}
             </div>
         </div>
     )
